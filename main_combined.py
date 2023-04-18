@@ -135,6 +135,7 @@ def default_method(pcap_file):
 
 # CUSUM
 
+
 def dn(yn):
     if yn <= 1:
         return 0
@@ -159,6 +160,7 @@ def getLists(f):
             pass
     return (packets, timestamps)
 
+
 def processPackets(ip_list, timestamps):
     # Alpha Value
     alpha = 0.8
@@ -173,7 +175,7 @@ def processPackets(ip_list, timestamps):
     for i in range(0, len(ip_list), blockSize):
         # print("N:",i,"-",i+blockSize)
         currentIP = ip_list[i:i + blockSize]
-        
+
         syn_dict = {}
         f_dict = {}
         r_dict = {}
@@ -181,9 +183,9 @@ def processPackets(ip_list, timestamps):
             src = inet_to_str(ip.src)
             dst = inet_to_str(ip.dst)
             tcp = ip.data
-             # 2 is hex for SYN flag
+            # 2 is hex for SYN flag
             if tcp.flags == 2:
-                   if src not in syn_dict:
+                if src not in syn_dict:
                     syn_dict[tcp.seq] = (src, dst, False)
 
             # 18 is hex for SYNACK flag (2+16)
@@ -199,11 +201,11 @@ def processPackets(ip_list, timestamps):
         estimate_f = alpha * (0 if not f else f[-1]) + (1-alpha)*synack_f
         delta1n = abs(len(f_dict)-len(syn_dict))
         delta2n = abs(len(f_dict)-len(r_dict))
-        d1n =0
-        d2n=0
+        d1n = 0
+        d2n = 0
         if estimate_f == 0:
-            d1n=0
-            d2n=0
+            d1n = 0
+            d2n = 0
         else:
             d1n = delta1n/estimate_f
             d2n = delta2n/estimate_f
@@ -216,16 +218,17 @@ def processPackets(ip_list, timestamps):
         S = sum(x)
         s.append(S)
         yn = S - min(s)
-        if dn(yn) ==1 :
+        if dn(yn) == 1:
             print("****** SYN FLOOD DETECTED *******")
-            print("a SYN flood has been detected at time:", str(datetime.datetime.utcfromtimestamp(timestamps[i])))
+            print("a SYN flood has been detected at time:", str(
+                datetime.datetime.utcfromtimestamp(timestamps[i])))
             # detection_count +=1
             # victims = np.unique(list(map(operator.itemgetter(0), list(r_dict.values()))))
             # attackers = np.unique(list(map(operator.itemgetter(1), list(r_dict.values()))))
             # print("Victim IPs:", [x for x in victims])
             # print("Attacker IPs:", [x for x in attackers])
             return
-        #consider the case where all pcaps in the current n are all SYN flooding victim IPs
+        # consider the case where all pcaps in the current n are all SYN flooding victim IPs
         # elif len(syn_dict) == len(currentIP):
         #     print("a SYN flood has been detected.")
         #     detection_count +=1
@@ -235,6 +238,7 @@ def processPackets(ip_list, timestamps):
         #     print("Attacker IPs:", [x for x in attackers])
     print("No Floods Detected")
     # print("A Syn flood was detected",detection_count,"times in the pcap.")
+
 
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
@@ -250,17 +254,17 @@ if __name__ == '__main__':
         print("Attackers:")
         for ip in ips:
             print(ip)
-    tdefault = time.time() - t0
+    tdefault = time.time()
     print("Adaptive Threshold Method")
     ata(pcap_file)
-    tata = time.time() - tdefault
-    print("Runtime for Default Method: " + str(convert_time(tdefault)))
-    print("Runtime for Adaptive Threshold Method: " + str(convert_time(tata)))
-    t1 = time.time()
+    tata = time.time()
     ip_list, timestamps = getLists(pcap_file)
     processPackets(ip_list, timestamps)
-    tcusum = time.time() - t1
-    print("Runtime for CUSUM:", str(convert_time(tcusum)))
+    tcusum = time.time()
+    print("Runtime for Default Method: " + str(convert_time(tdefault - t0)))
+    print("Runtime for Adaptive Threshold Method: " +
+          str(convert_time(tata - tdefault)))
+    print("Runtime for CUSUM:", str(convert_time(tcusum - tata)))
 
 
 # used the reference site in the hw:
