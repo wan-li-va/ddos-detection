@@ -69,7 +69,6 @@ def ata(pcap_file):
                     # print("Nothing detected between " +
                     #         str(convert_time(prev_time)) + " - " + str(convert_time(timestamp)))
                     # print("Number of packets: " + str(num_syn))
-                    print("*")
                     prev_time = timestamp
                     num_syn = 0
                 else:
@@ -258,13 +257,15 @@ if __name__ == '__main__':
     print("Adaptive Threshold Method")
     ata(pcap_file)
     tata = time.time()
+    print("CUSUM Method")
     ip_list, timestamps = getLists(pcap_file)
     processPackets(ip_list, timestamps)
     tcusum = time.time()
-    print("Runtime for Default Method: " + str(convert_time(tdefault - t0)))
+    print("Runtime for Default Method: " +
+          str(convert_time((tdefault - t0).seconds)))
     print("Runtime for Adaptive Threshold Method: " +
-          str(convert_time(tata - tdefault)))
-    print("Runtime for CUSUM:", str(convert_time(tcusum - tata)))
+          str(convert_time((tata - tdefault).seconds)))
+    print("Runtime for CUSUM:", str(convert_time((tcusum - tata).seconds)))
 
 
 # used the reference site in the hw:
