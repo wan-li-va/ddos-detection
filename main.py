@@ -35,7 +35,8 @@ def ewma(prev, current, beta):
 
 
 # adaptive threshold algorithm
-def ata(pcap):
+def ata(pcap_file):
+    pcap = dpkt.pcap.Reader(open(pcap_file, 'rb'))
     num_syn = 0
     prev_time = 0
     prev_ewma = 1
@@ -86,7 +87,7 @@ def ata(pcap):
                         # print("Nothing detected between " +
                         #     str(convert_time(prev_time)) + " - " + str(convert_time(timestamp)))
                         # print("Number of packets: " + str(num_syn))
-                        print("*")
+                        # print("*")
                         prev_time = timestamp
                         num_syn = 0
                         prev_ewma = ewma(prev_ewma, num_syn, BETA)
@@ -94,7 +95,8 @@ def ata(pcap):
             # print(convert_time(timestamp))
 
 
-def default_method(pcap):
+def default_method(pcap_file):
+    pcap = dpkt.pcap.Reader(open(pcap_file, 'rb'))
     output = dict()
     for timestamp, buf in pcap:
         ip = isTCP(buf)
@@ -136,17 +138,21 @@ if __name__ == '__main__':
         print("Please include a PCAP filename.")
         sys.exit(-1)
     pcap_file = sys.argv[1]
-    pcap = dpkt.pcap.Reader(open(pcap_file, 'rb'))
-    # beta = 1
+    # pcap = dpkt.pcap.Reader(open(pcap_file, 'rb'))
     t0 = time.time()
-    ips = default_method(pcap)
-    for ip in ips:
-        print(ip)
+    print("Default Method from HW 1: ")
+    ips = default_method(pcap_file)
+    if len(ips) > 0:
+        print("****** SYN FLOOD DETECTED *******")
+        print("Attackers:")
+        for ip in ips:
+            print(ip)
     tdefault = time.time() - t0
-    ata(pcap)
+    print("Adaptive Threshold Method")
+    ata(pcap_file)
     tata = time.time() - tdefault
-    print("Runtime for Default Method: " + tdefault)
-    print("Runtime for Adaptive Threshold Method: " + tata)
+    print("Runtime for Default Method: " + str(convert_time(tdefault)))
+    print("Runtime for Adaptive Threshold Method: " + str(convert_time(tata)))
 
 
 # used the reference site in the hw:
