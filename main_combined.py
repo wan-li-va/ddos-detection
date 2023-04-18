@@ -262,10 +262,10 @@ if __name__ == '__main__':
     processPackets(ip_list, timestamps)
     tcusum = time.time()
     print("Runtime for Default Method: " +
-          str(convert_time((tdefault - t0).seconds)))
+          str(convert_time(tdefault - t0).second) + " seconds")
     print("Runtime for Adaptive Threshold Method: " +
-          str(convert_time((tata - tdefault).seconds)))
-    print("Runtime for CUSUM:", str(convert_time((tcusum - tata).seconds)))
+          str(convert_time(tata - tdefault).second) + " seconds")
+    print("Runtime for CUSUM:", str(convert_time(tcusum - tata).second)+ " seconds")
 
 
 # used the reference site in the hw:
