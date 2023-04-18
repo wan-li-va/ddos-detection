@@ -40,18 +40,18 @@ def ata(pcap):
     prev_time = 0
     prev_ewma = 1
     start_time = 0
-    startTimestamp = False
-    startAverage = False
+    start_timestamp = False
+    start_average = False
 
     BETA = 0.75
     ALPHA = 3
     INTERVAL = 5
 
     for timestamp, buf in pcap:
-        if not startTimestamp:
+        if not start_timestamp:
             prev_time = timestamp
             start_time = timestamp
-            startTimestamp = True
+            start_timestamp = True
         ip = isTCP(buf)
         if ip != 0:
             tcp = ip.data
@@ -61,9 +61,9 @@ def ata(pcap):
                 num_syn += 1
 
             if(timestamp - prev_time > INTERVAL):
-                if not startAverage:
+                if not start_average:
                     prev_ewma = num_syn
-                    startAverage = True
+                    start_average = True
                     # print("Nothing detected between " +
                     #         str(convert_time(prev_time)) + " - " + str(convert_time(timestamp)))
                     # print("Number of packets: " + str(num_syn))
