@@ -1,6 +1,7 @@
 import sys
 import socket
 import dpkt
+import datetime
 
 
 def inet_to_str(inet):
@@ -23,6 +24,9 @@ def isTCP(buf):
             return ip
     return 0
 
+def convert_time(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).time()
+
 
 def ewma(prev, current, beta):
     return beta*prev + (1-beta)*current
@@ -32,38 +36,65 @@ def ewma(prev, current, beta):
 def ata(pcap):
     num_syn = 0
     prev_time = 0
-    prev_ewma = 0
+    prev_ewma = 1
+    start_time = 0
+    startTimestamp = False
+    startAverage = False
 
-    BETA = 0.5
-    ALPHA = 2
+    BETA = 0.75
+    ALPHA = 3
+    INTERVAL = 5
 
     for timestamp, buf in pcap:
+        if not startTimestamp:
+            prev_time = timestamp
+            start_time = timestamp
+            startTimestamp = True
         ip = isTCP(buf)
-        if ip is not 0:
+        if ip != 0:
             tcp = ip.data
             syn = (tcp.flags & dpkt.tcp.TH_SYN != 0)
 
-        if syn:
-            num_syn += 1
-        if(timestamp - prev_time > 30):
-            if(num_syn > (ALPHA + 1) * prev_ewma):
-                print("****** SYN FLOOD DETECTED *******")
-                print("Flood detected at time: " + timestamp)
-                print("Average number of packets: " + prev_ewma)
-                print("Number of packets detected between " +
-                      prev_time + " - " + timestamp + ":" + num_syn)
-                break
-            else:
-                prev_time = timestamp
-                num_syn = 0
-                prev_ewma = ewma(prev_ewma, num_syn, BETA)
+            if syn:
+                num_syn += 1
+                
+            if(timestamp - prev_time > INTERVAL):
+                if not startAverage:
+                    prev_ewma = num_syn
+                    startAverage = True
+                    # print("Nothing detected between " +
+                    #         str(convert_time(prev_time)) + " - " + str(convert_time(timestamp)))
+                    # print("Number of packets: " + str(num_syn))
+                    print("*")
+                    prev_time = timestamp
+                    num_syn = 0
+                else:
+                    if(num_syn > (ALPHA + 1) * prev_ewma):
+                        print("Nothing detected between " +
+                            str(convert_time(start_time)) + " - " + str(convert_time(timestamp)))
+                        print("****** SYN FLOOD DETECTED *******")
+                        print("Flood detected at time: " + str(convert_time(timestamp)))
+                        print("Expected average number of packets: " + str(prev_ewma))
+                        print("Number of packets detected between " +
+                            str(convert_time(prev_time)) + " - " + str(convert_time(timestamp)) + " : " + str(num_syn))
+                        break
+                    else:
+                        # print("Nothing detected between " +
+                        #     str(convert_time(prev_time)) + " - " + str(convert_time(timestamp)))
+                        # print("Number of packets: " + str(num_syn))
+                        print("*")
+                        prev_time = timestamp
+                        num_syn = 0
+                        prev_ewma = ewma(prev_ewma, num_syn, BETA)
+            
+            # print(convert_time(timestamp))
 
 
 def default_method(pcap):
     output = dict()
     for timestamp, buf in pcap:
         ip = isTCP(buf)
-        if ip is not 0:
+        if ip != 0:
             tcp = ip.data
 
             src_ip = inet_to_str(ip.src)
@@ -103,9 +134,11 @@ if __name__ == '__main__':
     pcap_file = sys.argv[1]
     pcap = dpkt.pcap.Reader(open(pcap_file, 'rb'))
     # beta = 1
-    ips = default_method(pcap)
-    for ip in ips:
-        print(ip)
+    # ips = default_method(pcap)
+    # if len(ips) == 0:
+    #     print("none")
+    # for ip in ips:
+    #     print(ip)
     ata(pcap)
 
 
