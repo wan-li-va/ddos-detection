@@ -102,10 +102,11 @@ if __name__ == '__main__':
         sys.exit(-1)
     pcap_file = sys.argv[1]
     pcap = dpkt.pcap.Reader(open(pcap_file, 'rb'))
-    beta = 1
+    # beta = 1
     ips = default_method(pcap)
     for ip in ips:
         print(ip)
+    ata(pcap)
 
 
 # used the reference site in the hw:
