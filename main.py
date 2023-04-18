@@ -1,6 +1,7 @@
 import sys
 import socket
 import dpkt
+import time
 
 
 def inet_to_str(inet):
@@ -39,31 +40,32 @@ def ata(pcap):
 
     for timestamp, buf in pcap:
         ip = isTCP(buf)
-        if ip is not 0:
+        if ip != 0:
             tcp = ip.data
             syn = (tcp.flags & dpkt.tcp.TH_SYN != 0)
 
-        if syn:
-            num_syn += 1
-        if(timestamp - prev_time > 30):
-            if(num_syn > (ALPHA + 1) * prev_ewma):
-                print("****** SYN FLOOD DETECTED *******")
-                print("Flood detected at time: " + timestamp)
-                print("Average number of packets: " + prev_ewma)
-                print("Number of packets detected between " +
-                      prev_time + " - " + timestamp + ":" + num_syn)
-                break
-            else:
-                prev_time = timestamp
-                num_syn = 0
-                prev_ewma = ewma(prev_ewma, num_syn, BETA)
+            if syn:
+                num_syn += 1
+            if(timestamp - prev_time > 30):
+                if(num_syn > (ALPHA + 1) * prev_ewma):
+                    print("****** SYN FLOOD DETECTED *******")
+                    print("Flood detected at time: " +
+                          timestamp + " in the pcap")
+                    print("Expected average number of packets: " + prev_ewma)
+                    print("Number of packets detected between " +
+                          prev_time + " - " + timestamp + " : " + num_syn)
+                    break
+                else:
+                    prev_time = timestamp
+                    num_syn = 0
+                    prev_ewma = ewma(prev_ewma, num_syn, BETA)
 
 
 def default_method(pcap):
     output = dict()
     for timestamp, buf in pcap:
         ip = isTCP(buf)
-        if ip is not 0:
+        if ip != 0:
             tcp = ip.data
 
             src_ip = inet_to_str(ip.src)
@@ -103,10 +105,15 @@ if __name__ == '__main__':
     pcap_file = sys.argv[1]
     pcap = dpkt.pcap.Reader(open(pcap_file, 'rb'))
     # beta = 1
+    t0 = time.time()
     ips = default_method(pcap)
     for ip in ips:
         print(ip)
+    tdefault = time.time() - t0
     ata(pcap)
+    tata = time.time() - tdefault
+    print("Runtime for Default Method: " + tdefault)
+    print("Runtime for Adaptive Threshold Method: " + tata)
 
 
 # used the reference site in the hw:
